@@ -1,0 +1,90 @@
+{
+  "project_info": {
+    "project_number": "273174365606",
+    "project_id": "ditck-d0ef2",
+    "storage_bucket": "ditck-d0ef2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:273174365606:android:30f96ce8a9efd1046d3b67",
+        "android_client_info": {
+          "package_name": "com.example.dist_calculator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "273174365606-79cldbkm37a6i06f9os30el5b2f3gdau.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.dist_calculator",
+            "certificate_hash": "c1fe89ed427a2524f9a1f2fac26e2ba697537fa9"
+          }
+        },
+        {
+          "client_id": "273174365606-t3vpmhoue8do7gur7s25iir744mrjpjo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC56rtyXV9VzHtkkR4_vma4zXrpKChcWcw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "273174365606-t3vpmhoue8do7gur7s25iir744mrjpjo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "273174365606-f2eds48u5ea8eh452jhr5m07pnsb1967.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.distCalculator"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:273174365606:android:b9b1c79a855432d46d3b67",
+        "android_client_info": {
+          "package_name": "com.example.ditck"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "273174365606-t3vpmhoue8do7gur7s25iir744mrjpjo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC56rtyXV9VzHtkkR4_vma4zXrpKChcWcw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "273174365606-t3vpmhoue8do7gur7s25iir744mrjpjo.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "273174365606-f2eds48u5ea8eh452jhr5m07pnsb1967.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.distCalculator"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
