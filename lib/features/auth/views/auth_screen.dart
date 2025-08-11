@@ -5,7 +5,6 @@ import '../service/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
@@ -27,8 +26,18 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   // Form keys and controllers
   final _signUpFormKey = GlobalKey<FormState>();
   final _loginFormKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _companyNameController = TextEditingController();
+  final _companyNumber = TextEditingController();
   final _companyController = TextEditingController();
+  final _companyEmail = TextEditingController();
+
+  //Super admin controllers
+  final _superAdminNameController = TextEditingController();
+  final _superAdminMobileController = TextEditingController();
+  final _superAdminEmailController = TextEditingController();
+  final _superAdminPasswordController = TextEditingController();
+
+  //Admin details
   final _mobileController = TextEditingController();
   final _emailController = TextEditingController();
   final _designationController = TextEditingController();
@@ -67,6 +76,37 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     _checkLoginPersistence();
   }
 
+  Future<void> _handleCompanySignUp() async {
+    if (!_signUpFormKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+
+    try {
+      // Create company and super admin
+      await _authService.createCompanyAndSuperAdmin(
+        companyName: _companyNameController.text.trim(),
+        companyMobile: _companyNumber.text.trim(),
+        companyEmail: _companyEmail.text.trim(),
+        superAdminName: _superAdminNameController.text.trim(),
+        superAdminMobile: _superAdminMobileController.text.trim(),
+        superAdminEmail: _superAdminEmailController.text.trim(),
+        superAdminPassword: _superAdminPasswordController.text.trim(),
+      );
+
+      await _setLoginPersistence(true);
+      _showSnackbar('🎉 Company account created successfully!');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+      );
+    } on FirebaseAuthException catch (e) {
+      _showSnackbar(e.message ?? 'Registration failed', isError: true);
+    } catch (e) {
+      _showSnackbar('Failed to create account: $e', isError: true);
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _checkLoginPersistence() async {
     final prefs = await SharedPreferences.getInstance();
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
@@ -91,7 +131,8 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     _tabController.dispose();
     // Dispose all controllers
     for (var c in [
-      _nameController,
+      _companyEmail,
+      _companyNameController,
       _companyController,
       _mobileController,
       _emailController,
@@ -99,6 +140,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       _passwordController,
       _loginMobileController,
       _loginPasswordController,
+      _companyNumber,
     ]) {
       c.dispose();
     }
@@ -383,16 +425,16 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
           children: [
             const SizedBox(height: 10),
             const Text(
-              'Create Your Account',
+              'Create Your Company Account',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: _textColor,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Join thousands of users tracking their journeys',
+              'Join the ultimate users tracking their journeys',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[600],
@@ -400,20 +442,20 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
               ),
             ),
             const SizedBox(height: 32),
-
             _buildTextField(
-              controller: _nameController,
-              label: 'Full Name',
-              hint: 'John Doe',
-              icon: Icons.person_rounded,
-              validator: (v) =>
-                  (v?.trim().length ?? 0) < 2 ? 'Name too short' : null,
+              controller: _companyNameController,
+              label: 'Company Name',
+              hint: 'Tech Solutions Inc.',
+              icon: Icons.business_rounded,
+              validator: (v) => (v?.trim().isEmpty ?? true)
+                  ? 'Company name is required'
+                  : null,
             ),
             const SizedBox(height: 18),
 
             _buildTextField(
-              controller: _mobileController,
-              label: 'Mobile Number',
+              controller: _companyNumber,
+              label: 'Company Mobile Number',
               hint: '9876543210',
               icon: Icons.smartphone_rounded,
               keyboardType: TextInputType.phone,
@@ -428,9 +470,47 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             ),
             const SizedBox(height: 18),
 
+            // Super Admin Information
+            const Divider(height: 30, thickness: 1),
+            const Text(
+              'Super Admin Details',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: _textColor,
+              ),
+            ),
+            const SizedBox(height: 18),
+
             _buildTextField(
-              controller: _emailController,
-              label: 'Email Address',
+              controller: _superAdminNameController,
+              label: 'Super Admin Full Name',
+              hint: 'John Doe',
+              icon: Icons.person_rounded,
+              validator: (v) =>
+                  (v?.trim().isEmpty ?? true) ? 'Name is required' : null,
+            ),
+            const SizedBox(height: 18),
+
+            _buildTextField(
+              controller: _superAdminMobileController,
+              label: 'Super Admin Mobile',
+              hint: '9876543210',
+              icon: Icons.phone_rounded,
+              keyboardType: TextInputType.phone,
+              prefix: '+91 ',
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
+              validator: (v) =>
+                  (v?.length ?? 0) != 10 ? 'Enter valid 10-digit number' : null,
+            ),
+            const SizedBox(height: 18),
+
+            _buildTextField(
+              controller: _superAdminEmailController,
+              label: 'Super Admin Email',
               hint: 'john@company.com',
               icon: Icons.email_rounded,
               keyboardType: TextInputType.emailAddress,
@@ -441,42 +521,21 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             ),
             const SizedBox(height: 18),
 
-            _buildTextField(
-              controller: _companyController,
-              label: 'Company Name',
-              hint: 'Tech Solutions Inc.',
-              icon: Icons.business_rounded,
-              validator: (v) => (v?.trim().isEmpty ?? true)
-                  ? 'Company name is required'
-                  : null,
-            ),
-            const SizedBox(height: 18),
-
-            _buildTextField(
-              controller: _designationController,
-              label: 'Your Role',
-              hint: 'Sales Manager',
-              icon: Icons.work_rounded,
-              validator: (v) => (v?.trim().isEmpty ?? true)
-                  ? 'Designation is required'
-                  : null,
-            ),
-            const SizedBox(height: 18),
-
             _buildPasswordField(
-              controller: _passwordController,
+              controller: _superAdminPasswordController,
               label: 'Create Password',
-              hint: 'Min. 6 characters',
+              hint: 'Min. 8 characters',
               validator: (v) =>
-                  (v?.length ?? 0) < 6 ? 'Password too short' : null,
+                  (v?.length ?? 0) < 8 ? 'Password too short' : null,
             ),
             const SizedBox(height: 32),
 
             _buildActionButton(
-              'Create Account',
+              'Create Company Account',
               Icons.rocket_launch_rounded,
-              _handleSignUp,
+              _handleCompanySignUp,
             ),
+
             const SizedBox(height: 20),
             _buildDivider(),
             const SizedBox(height: 20),
@@ -888,7 +947,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       await _authService.signUpWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-        name: _nameController.text.trim(),
+        name: _companyNameController.text.trim(),
         company: _companyController.text.trim(),
         mobile: _mobileController.text.trim(),
         designation: _designationController.text.trim(),

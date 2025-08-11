@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,7 +19,7 @@ class PersistentGpsHandler extends TaskHandler {
   bool _isMoving = false;
   int _stationaryCount = 0;
   int _currentInterval = 10;
-  List<Map<String, dynamic>> _locationBatch = [];
+  final List<Map<String, dynamic>> _locationBatch = [];
   DateTime? _lastLocationTime;
   double _currentSpeed = 0.0;
   DateTime _serviceStartTime = DateTime.now();
