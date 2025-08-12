@@ -1,6 +1,5 @@
 import 'package:ditck/features/auth/views/auth_screen.dart';
 import 'package:ditck/features/home/views/home_page.dart';
-import 'package:ditck/features/home/views/meeting_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -26,10 +25,5 @@ void main() async {
     startScreen = const AuthScreen();
   }
 
-  runApp(
-    MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: MeetingRoomPage(),
-    ),
-  );
+  runApp(MaterialApp(debugShowCheckedModeBanner: false, home: startScreen));
 }
