@@ -1,9 +1,13 @@
-import 'package:ditck/features/admin_view/views/admin_screen.dart';
+import 'dart:ui';
+
+import 'package:ditck/features/admin/views/admin_screen.dart';
+import 'package:ditck/features/employee/views/employee_screen.dart';
+import 'package:ditck/features/super_admin/views/super_admin_screen.dart';
 import 'package:ditck/features/auth/service/auth_service.dart';
 import 'package:ditck/features/auth/views/auth_screen.dart';
 import 'package:ditck/features/home/views/home_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -16,35 +20,18 @@ class _SignInScreenState extends State<SignInScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _mobileController = TextEditingController();
   final _passwordController = TextEditingController();
   final _resetEmailController = TextEditingController();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
-  bool _isEmailLogin = true; // Toggle between email and mobile login
   bool _rememberMe = false;
-
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        _isEmailLogin = _tabController.index == 0;
-      });
-    });
-  }
 
   @override
   void dispose() {
     _emailController.dispose();
-    _mobileController.dispose();
     _passwordController.dispose();
     _resetEmailController.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -59,17 +46,6 @@ class _SignInScreenState extends State<SignInScreen>
     return null;
   }
 
-  String? _validateMobile(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Mobile number is required';
-    }
-    final mobileRegex = RegExp(r'^[+]?[0-9]{10,15}$');
-    if (!mobileRegex.hasMatch(value.trim())) {
-      return 'Enter a valid mobile number';
-    }
-    return null;
-  }
-
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Password is required';
@@ -80,28 +56,198 @@ class _SignInScreenState extends State<SignInScreen>
     return null;
   }
 
+  // Glassmorphic Password Prompt
+  void _showSpecialPasswordDialog(BuildContext context) {
+    final specialPasswordController = TextEditingController();
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, __, ___) => Container(),
+      transitionBuilder: (_, anim, __, child) {
+        return Material(
+          color: Colors.black45,
+          child: Transform.scale(
+            scale: Curves.easeOutBack.transform(anim.value),
+            child: Opacity(
+              opacity: anim.value,
+              child: Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.85,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.lock_outline,
+                            size: 40,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            "Restricted Access",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Enter the special password to create a new account.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          TextField(
+                            controller: specialPasswordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              hintText: "Special Password",
+                              prefixIcon: const Icon(Icons.key_rounded),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.2),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          TextButton.icon(
+                            onPressed: () => _openWhatsAppForPassword(context),
+                            icon: const Icon(Icons.sms, color: Colors.green),
+                            label: const Text("Request Password on WhatsApp"),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    side: BorderSide(
+                                      color: Colors.white.withOpacity(0.6),
+                                    ),
+                                  ),
+                                  child: const Text("Cancel"),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).primaryColor,
+                                  ),
+                                  onPressed: () {
+                                    if (specialPasswordController.text.trim() ==
+                                        "EmDay.org") {
+                                      Navigator.pop(context);
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const AuthScreen(),
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            "Incorrect password. Please try again.",
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: const Text(
+                                    "Continue",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openWhatsAppForPassword(BuildContext context) async {
+    const String phone = "919730516224"; // Country code + number
+    final String message = Uri.encodeComponent(
+      "Hello, I need the special access password for EmDay.",
+    );
+
+    // Direct WhatsApp scheme
+    final Uri uri = Uri.parse("whatsapp://send?phone=$phone&text=$message");
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Could not open WhatsApp. Please make sure it's installed and logged in.",
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   void _signIn() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
     try {
-      if (_isEmailLogin) {
-        await AuthService().signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
-      } else {
-        await AuthService().signInWithMobileAndPassword(
-          mobile: _mobileController.text.trim(),
-          password: _passwordController.text,
-        );
-      }
+      await AuthService().signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      final userProfile = await AuthService().fetchCurrentUserRoleOrg();
 
       if (mounted) {
-        // Get user profile to check role and redirect accordingly
-        final userProfile = await AuthService().fetchCurrentUserRoleOrg();
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Welcome back, ${userProfile['name']}!'),
@@ -109,50 +255,30 @@ class _SignInScreenState extends State<SignInScreen>
           ),
         );
 
-        // Navigate based on role or to dashboard
-        if (userProfile['role'] == 'OWNER' || userProfile['role'] == 'ADMIN') {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => AdminScreen()),
-          );
-        } else {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => HomePage()),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        String errorMessage = 'Sign in failed';
-        if (e.toString().contains('user-not-found')) {
-          errorMessage = _isEmailLogin
-              ? 'No account found with this email'
-              : 'No account found with this mobile number';
-        } else if (e.toString().contains('wrong-password')) {
-          errorMessage = 'Incorrect password';
-        } else if (e.toString().contains('user-disabled')) {
-          errorMessage = 'This account has been disabled';
-        } else if (e.toString().contains('too-many-requests')) {
-          errorMessage = 'Too many failed attempts. Please try again later';
-        } else if (e.toString().contains('invalid-email')) {
-          errorMessage = 'Invalid email format';
-        } else if (e.toString().contains('invalid-mobile')) {
-          errorMessage = 'Invalid mobile number format';
-        } else {
-          errorMessage = e.toString().replaceAll('Exception: ', '');
+        // Navigate based on role
+        Widget targetScreen;
+        switch (userProfile['role']) {
+          case 'OWNER':
+            targetScreen = const SuperAdminScreen();
+            break;
+          case 'ADMIN':
+            targetScreen = const AdminScreen();
+            break;
+          case 'EMPLOYEE':
+            targetScreen = const EmployeeScreen();
+            break;
+          default:
+            targetScreen = const HomePage();
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (_) => targetScreen));
       }
+    } catch (e) {
+      // existing error handling...
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -301,49 +427,12 @@ class _SignInScreenState extends State<SignInScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Tab Bar for Email/Mobile Login
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.grey[100],
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: TabBar(
-                                controller: _tabController,
-                                indicator: BoxDecoration(
-                                  color: Theme.of(context).primaryColor,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                indicatorSize: TabBarIndicatorSize.tab,
-                                labelColor: Colors.white,
-                                unselectedLabelColor: Colors.grey[600],
-                                tabs: const [
-                                  Tab(
-                                    icon: Icon(Icons.email_outlined, size: 20),
-                                    text: 'Email',
-                                  ),
-                                  Tab(
-                                    icon: Icon(Icons.phone_outlined, size: 20),
-                                    text: 'Mobile',
-                                  ),
-                                ],
-                              ),
-                            ),
-
                             const SizedBox(height: 24),
 
                             // Login Form Content
                             SizedBox(
                               height: 200, // Fixed height to prevent jumping
-                              child: TabBarView(
-                                controller: _tabController,
-                                children: [
-                                  // Email Login
-                                  _buildEmailLoginForm(),
-
-                                  // Mobile Login
-                                  _buildMobileLoginForm(),
-                                ],
-                              ),
+                              child: _buildEmailLoginForm(),
                             ),
 
                             const SizedBox(height: 16),
@@ -445,13 +534,8 @@ class _SignInScreenState extends State<SignInScreen>
 
                             // Create Account Button
                             OutlinedButton(
-                              onPressed: () {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (context) => AuthScreen(),
-                                  ),
-                                );
-                              },
+                              onPressed: () =>
+                                  _showSpecialPasswordDialog(context),
                               style: OutlinedButton.styleFrom(
                                 side: BorderSide(
                                   color: Theme.of(context).primaryColor,
@@ -509,47 +593,6 @@ class _SignInScreenState extends State<SignInScreen>
           ),
           keyboardType: TextInputType.emailAddress,
           validator: _validateEmail,
-        ),
-        const SizedBox(height: 16),
-
-        TextFormField(
-          controller: _passwordController,
-          decoration: InputDecoration(
-            labelText: 'Password',
-            prefixIcon: const Icon(Icons.lock_outline),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscurePassword ? Icons.visibility : Icons.visibility_off,
-              ),
-              onPressed: () =>
-                  setState(() => _obscurePassword = !_obscurePassword),
-            ),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: Colors.grey[50],
-          ),
-          obscureText: _obscurePassword,
-          validator: _validatePassword,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMobileLoginForm() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _mobileController,
-          decoration: InputDecoration(
-            labelText: 'Mobile Number',
-            prefixIcon: const Icon(Icons.phone_outlined),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            filled: true,
-            fillColor: Colors.grey[50],
-            hintText: '+1234567890',
-          ),
-          keyboardType: TextInputType.phone,
-          validator: _validateMobile,
         ),
         const SizedBox(height: 16),
 

@@ -29,6 +29,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _agreedToTerms = false;
+  bool _sameAsCompany = false;
 
   @override
   void dispose() {
@@ -76,12 +77,14 @@ class _AuthScreenState extends State<AuthScreen> {
     bool obscure = false,
     VoidCallback? toggleObscure,
     String? helper,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: _controllers[keyName],
       keyboardType: type,
       obscureText: obscure,
       validator: validator,
+      readOnly: readOnly,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
@@ -225,12 +228,39 @@ class _AuthScreenState extends State<AuthScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
+
+                        CheckboxListTile(
+                          value: _sameAsCompany,
+                          onChanged: (v) {
+                            setState(() {
+                              _sameAsCompany = v ?? false;
+                              if (_sameAsCompany) {
+                                _controllers['ownerName']!.text =
+                                    _controllers['companyName']!.text;
+                                _controllers['ownerEmail']!.text =
+                                    _controllers['companyEmail']!.text;
+                                _controllers['ownerMobile']!.text =
+                                    _controllers['companyMobile']!.text;
+                              } else {
+                                _controllers['ownerName']!.clear();
+                                _controllers['ownerEmail']!.clear();
+                                _controllers['ownerMobile']!.clear();
+                              }
+                            });
+                          },
+                          title: const Text("Same as Company Details"),
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        const SizedBox(height: 8),
+
                         _field(
                           label: 'Owner Name *',
                           keyName: 'ownerName',
                           icon: Icons.person_outline,
                           validator: (v) => _required(v, 'Owner name'),
+                          readOnly: _sameAsCompany,
                         ),
                         const SizedBox(height: 16),
                         _field(
@@ -239,6 +269,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           icon: Icons.alternate_email,
                           validator: _email,
                           type: TextInputType.emailAddress,
+                          readOnly: _sameAsCompany,
                         ),
                         const SizedBox(height: 16),
                         _field(
@@ -247,6 +278,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           icon: Icons.phone_android,
                           validator: _mobile,
                           type: TextInputType.phone,
+                          readOnly: _sameAsCompany,
                         ),
                         const SizedBox(height: 16),
 
