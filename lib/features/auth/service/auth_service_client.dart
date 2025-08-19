@@ -17,7 +17,7 @@ class AuthServiceClient {
     return '+$digits';
   }
 
-  /// Reserve a phone in phones/<phone> using a Firestore transaction.
+  /// Reserve a phone in phones/phone using a Firestore transaction.
   /// Returns true if reserved successfully (document created). Throws on failure.
   Future<void> reservePhone(String e164Phone, String reservedByUid) async {
     final docRef = _firestore.collection('phones').doc(e164Phone);
@@ -96,7 +96,6 @@ class AuthServiceClient {
     UserCredential? newlyCreatedCredential;
 
     // store current user's email to sign back later (we need it)
-    final String signedInEmail = currentUser.email ?? creatorEmail;
 
     try {
       // 3) Sign out current (super admin) user
@@ -144,10 +143,6 @@ class AuthServiceClient {
       await _auth.signOut();
 
       // 8) Sign back in as original Super Admin using provided credentials
-      final signBack = await _auth.signInWithEmailAndPassword(
-        email: creatorEmail,
-        password: creatorPassword,
-      );
 
       // success
       return {'success': true, 'message': 'User created successfully', 'uid': newUid};

@@ -13,7 +13,6 @@ class AuthService {
   // Collections
   CollectionReference get _orgs => _db.collection('organizations');
   CollectionReference get _users => _db.collection('users');
-  CollectionReference get _plans => _db.collection('plans');
   CollectionReference get _subscriptions => _db.collection('subscriptions');
 
   /// Create organization doc and OWNER user (super-admin).
@@ -363,7 +362,6 @@ class AuthService {
     if (!orgDoc.exists) {
       throw Exception('Organization not found');
     }
-    final orgData = orgDoc.data() as Map<String, dynamic>;
 
     // Check for duplicate email
     final dupEmail = await _users
